@@ -26,6 +26,20 @@ curl localhost:8000/health
 docker rm -f sre-lab
 ```
 
+## Run with Terraform
+
+Terraform pulls the image from GHCR and runs it as a container on Docker Desktop.
+The image tag is set in `terraform/terraform.tfvars`.
+
+```bash
+cd terraform
+terraform init
+terraform plan -out=sre-lab.tfplan
+terraform apply sre-lab.tfplan
+curl localhost:8080/health
+terraform destroy
+```
+
 ## Lint and test
 
 ```bash
