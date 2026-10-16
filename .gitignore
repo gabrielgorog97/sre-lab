@@ -3,3 +3,10 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 *.pyc
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
