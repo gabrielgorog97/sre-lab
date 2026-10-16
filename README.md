@@ -40,6 +40,18 @@ curl localhost:8080/health
 terraform destroy
 ```
 
+## Run on Kubernetes (Docker Desktop)
+
+Always pass `--context docker-desktop` so nothing is applied to another cluster.
+
+```bash
+kubectl --context docker-desktop apply -f k8s/namespace.yaml
+kubectl --context docker-desktop apply -f k8s/
+kubectl --context docker-desktop -n sre-lab rollout status deployment/sre-lab
+kubectl --context docker-desktop -n sre-lab port-forward svc/sre-lab 9090:80
+curl localhost:9090/health
+```
+
 ## Lint and test
 
 ```bash
