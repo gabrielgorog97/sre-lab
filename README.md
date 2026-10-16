@@ -110,11 +110,28 @@ kubectl --context docker-desktop apply -f argocd/monitoring-dashboards.yaml
 - Grafana: http://localhost:3000
 - Prometheus: http://localhost:9090
 
-## Public URL (Cloudflare Tunnel)
+## Public URLs (Cloudflare Tunnel)
 
-The dev environment is published at https://sre.gabrielgorog.ro. A `cloudflared` pod opens an
-outbound connection to Cloudflare, so the cluster needs no public IP and no open ports. It is
-online only while the cluster runs.
+| URL | What | Access |
+|---|---|---|
+| https://sre.gabrielgorog.ro | the store (dev) | public |
+| https://grafana.gabrielgorog.ro | dashboards, logs, alerts | public read-only, admin login for changes |
+| https://argocd.gabrielgorog.ro | GitOps apps | public read-only, admin login for changes |
+
+A `cloudflared` pod opens an outbound connection to Cloudflare, so the cluster needs no public
+IP and no open ports. Everything is online only while the cluster runs.
+
+Prometheus and Alertmanager have no login of their own, so they stay private. Their data is
+visible through Grafana, which uses both as data sources.
+
+Argo CD is installed from the upstream manifest, not managed by itself, so read-only access
+is set by hand:
+
+```bash
+kubectl -n argocd patch cm argocd-cm --type merge \
+  -p '{"data":{"users.anonymous.enabled":"true","url":"https://argocd.gabrielgorog.ro"}}'
+kubectl -n argocd patch cm argocd-rbac-cm --type merge -p '{"data":{"policy.default":"role:readonly"}}'
+```
 
 One-time setup, done from the CLI without the Zero Trust dashboard:
 
