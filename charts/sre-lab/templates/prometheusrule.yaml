@@ -1,0 +1,46 @@
+{{- if .Values.monitoring.enabled }}
+{{- $selector := printf "namespace=%q, service=%q" .Release.Namespace .Release.Name }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    {{- include "sre-lab.labels" . | nindent 4 }}
+spec:
+  groups:
+    - name: {{ .Release.Name }}.rules
+      rules:
+        - alert: SreLabDown
+          expr: (sum(up{ {{ $selector }} }) or vector(0)) == 0
+          for: 1m
+          labels:
+            severity: {{ .Values.monitoring.severity }}
+          annotations:
+            summary: "{{ .Release.Name }} has no healthy targets"
+            description: "Prometheus cannot scrape any pod of {{ .Release.Name }} in {{ .Release.Namespace }}."
+
+        - alert: SreLabHighErrorRate
+          expr: |
+            sum(rate(http_requests_total{ {{ $selector }}, status=~"5.." }[2m]))
+              /
+            sum(rate(http_requests_total{ {{ $selector }} }[2m]))
+              > {{ .Values.monitoring.errorRateThreshold }}
+          for: 2m
+          labels:
+            severity: {{ .Values.monitoring.severity }}
+          annotations:
+            summary: "{{ .Release.Name }} 5xx error rate is high"
+            description: "More than {{ mulf .Values.monitoring.errorRateThreshold 100 }}% of requests to {{ .Release.Name }} returned 5xx for 2 minutes."
+
+        - alert: SreLabHighLatency
+          expr: |
+            histogram_quantile(0.95,
+              sum by (le) (rate(http_request_duration_seconds_bucket{ {{ $selector }}, path!="/metrics" }[5m]))
+            ) > {{ .Values.monitoring.latencyP95Seconds }}
+          for: 5m
+          labels:
+            severity: {{ .Values.monitoring.severity }}
+          annotations:
+            summary: "{{ .Release.Name }} p95 latency is high"
+            description: "p95 latency of {{ .Release.Name }} is above {{ .Values.monitoring.latencyP95Seconds }}s for 5 minutes."
+{{- end }}

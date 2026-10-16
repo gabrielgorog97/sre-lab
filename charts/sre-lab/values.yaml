@@ -18,6 +18,13 @@ resources:
   limits:
     memory: 128Mi
 
+monitoring:
+  enabled: true
+  scrapeInterval: 15s
+  severity: warning
+  errorRateThreshold: 0.05
+  latencyP95Seconds: 0.5
+
 probes:
   path: /health
   readiness:
