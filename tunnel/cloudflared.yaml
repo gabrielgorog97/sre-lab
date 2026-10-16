@@ -1,0 +1,80 @@
+# Credentials are not in Git. Create them once with:
+#   kubectl -n cloudflared create secret generic tunnel-credentials \
+#     --from-file=credentials.json=$HOME/.cloudflared/<tunnel-id>.json
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudflared
+  namespace: cloudflared
+data:
+  config.yaml: |
+    tunnel: 6905f92a-171e-4252-a48b-ce851b036051
+    credentials-file: /etc/cloudflared/creds/credentials.json
+    metrics: 0.0.0.0:2000
+    no-autoupdate: true
+    ingress:
+      - hostname: sre.gabrielgorog.ro
+        service: http://sre-lab-dev.sre-lab-dev.svc.cluster.local:80
+      - service: http_status:404
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudflared
+  namespace: cloudflared
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloudflared
+  template:
+    metadata:
+      labels:
+        app: cloudflared
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+        - name: cloudflared
+          image: cloudflare/cloudflared:2026.10.1
+          args: ["tunnel", "--config", "/etc/cloudflared/config/config.yaml", "run"]
+          ports:
+            - name: metrics
+              containerPort: 2000
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: metrics
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: metrics
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: config
+              mountPath: /etc/cloudflared/config
+              readOnly: true
+            - name: creds
+              mountPath: /etc/cloudflared/creds
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: cloudflared
+        - name: creds
+          secret:
+            secretName: tunnel-credentials

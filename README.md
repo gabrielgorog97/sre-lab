@@ -1,13 +1,22 @@
 # sre-lab
 
-A small API used to practice the full SRE toolchain: Docker, GitHub Actions, Terraform,
-Kubernetes, Helm, Argo CD, Prometheus and Grafana.
+A small demo store, **uptime.supply**, used to practice the full SRE toolchain: Docker,
+GitHub Actions, Terraform, Kubernetes, Helm, Argo CD, Prometheus, Grafana and Loki.
+Nothing is for sale and no payment is taken.
+
+The store has a chaos panel that slows down or fails the checkout. That is what makes the
+alerts, dashboards and logs in this repo show something real.
 
 ## Endpoints
 
-- `GET /` returns a hello message
+- `GET /` the store UI
+- `GET /api/products` the product list
+- `POST /api/checkout` places a fake order; returns 503 when chaos says the payment fails
+- `GET /api/chaos`, `POST /api/chaos` read or set extra latency and failure rate for checkout.
+  Chaos is kept in memory per pod and resets itself after 5 minutes.
 - `GET /health` returns `{"status": "ok"}`, used by health checks
-- `GET /metrics` exposes Prometheus metrics (request count and latency)
+- `GET /error` always returns 500
+- `GET /metrics` exposes Prometheus metrics (requests, latency, `shop_orders_total`)
 
 ## Run locally
 
@@ -100,6 +109,23 @@ kubectl --context docker-desktop apply -f argocd/monitoring-dashboards.yaml
 
 - Grafana: http://localhost:3000
 - Prometheus: http://localhost:9090
+
+## Public URL (Cloudflare Tunnel)
+
+The dev environment is published at https://sre.gabrielgorog.ro. A `cloudflared` pod opens an
+outbound connection to Cloudflare, so the cluster needs no public IP and no open ports. It is
+online only while the cluster runs.
+
+One-time setup, done from the CLI without the Zero Trust dashboard:
+
+```bash
+cloudflared tunnel login
+cloudflared tunnel create sre-lab
+cloudflared tunnel route dns sre-lab sre.gabrielgorog.ro
+kubectl -n cloudflared create secret generic tunnel-credentials \
+  --from-file=credentials.json=$HOME/.cloudflared/<tunnel-id>.json
+kubectl apply -f argocd/cloudflared.yaml
+```
 
 ## Lint and test
 
