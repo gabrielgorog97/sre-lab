@@ -17,6 +17,15 @@ python3 -m venv .venv
 .venv/bin/uvicorn app.main:app --reload --port 8000
 ```
 
+## Run with Docker
+
+```bash
+docker build -t sre-lab:0.1.0 .
+docker run -d --name sre-lab -p 8000:8000 sre-lab:0.1.0
+curl localhost:8000/health
+docker rm -f sre-lab
+```
+
 ## Lint and test
 
 ```bash
