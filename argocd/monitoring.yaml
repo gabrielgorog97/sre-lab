@@ -21,6 +21,14 @@ spec:
         grafana:
           admin:
             existingSecret: grafana-admin
+          grafana.ini:
+            server:
+              root_url: https://grafana.gabrielgorog.ro
+            auth.anonymous:
+              enabled: true
+              org_role: Viewer
+            dashboards:
+              default_home_dashboard_path: /tmp/dashboards/sre-lab-golden-signals.json
           service:
             type: LoadBalancer
             port: 3000
