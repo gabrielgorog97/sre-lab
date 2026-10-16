@@ -110,6 +110,23 @@ kubectl --context docker-desktop apply -f argocd/monitoring-dashboards.yaml
 - Grafana: http://localhost:3000
 - Prometheus: http://localhost:9090
 
+## Public URL (Cloudflare Tunnel)
+
+The dev environment is published at https://sre.gabrielgorog.ro. A `cloudflared` pod opens an
+outbound connection to Cloudflare, so the cluster needs no public IP and no open ports. It is
+online only while the cluster runs.
+
+One-time setup, done from the CLI without the Zero Trust dashboard:
+
+```bash
+cloudflared tunnel login
+cloudflared tunnel create sre-lab
+cloudflared tunnel route dns sre-lab sre.gabrielgorog.ro
+kubectl -n cloudflared create secret generic tunnel-credentials \
+  --from-file=credentials.json=$HOME/.cloudflared/<tunnel-id>.json
+kubectl apply -f argocd/cloudflared.yaml
+```
+
 ## Lint and test
 
 ```bash
