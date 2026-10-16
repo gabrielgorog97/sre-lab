@@ -82,6 +82,25 @@ kubectl --context docker-desktop -n argocd get secret argocd-initial-admin-secre
   -o jsonpath='{.data.password}' | base64 -d; echo
 ```
 
+## Monitoring (Prometheus, Grafana, Alertmanager)
+
+`argocd/monitoring.yaml` installs kube-prometheus-stack. Grafana and Prometheus are exposed
+as LoadBalancer services, which Docker Desktop publishes on localhost.
+
+The Grafana admin password is read from a Secret that is created by hand, so it never
+lands in Git:
+
+```bash
+kubectl --context docker-desktop create namespace monitoring
+kubectl --context docker-desktop -n monitoring create secret generic grafana-admin \
+  --from-literal=admin-user=admin --from-literal=admin-password='<choose-one>'
+kubectl --context docker-desktop apply -f argocd/monitoring.yaml
+kubectl --context docker-desktop apply -f argocd/monitoring-dashboards.yaml
+```
+
+- Grafana: http://localhost:3000
+- Prometheus: http://localhost:9090
+
 ## Lint and test
 
 ```bash

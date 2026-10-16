@@ -16,7 +16,14 @@ spec:
             serviceMonitorSelectorNilUsesHelmValues: false
             ruleSelectorNilUsesHelmValues: false
             retention: 2d
+          service:
+            type: LoadBalancer
         grafana:
+          admin:
+            existingSecret: grafana-admin
+          service:
+            type: LoadBalancer
+            port: 3000
           sidecar:
             dashboards:
               searchNamespace: ALL
@@ -41,14 +48,3 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
-      - RespectIgnoreDifferences=true
-  ignoreDifferences:
-    - kind: Secret
-      name: monitoring-grafana
-      jsonPointers:
-        - /data
-    - group: apps
-      kind: Deployment
-      name: monitoring-grafana
-      jsonPointers:
-        - /spec/template/metadata/annotations/checksum~1secret
