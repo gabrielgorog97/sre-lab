@@ -22,3 +22,18 @@ def test_metrics_counts_requests():
     response = client.get("/metrics")
     assert response.status_code == 200
     assert 'http_requests_total{method="GET",path="/health",status="200"}' in response.text
+
+
+def test_error_returns_500_and_is_counted():
+    response = client.get("/error")
+    assert response.status_code == 500
+    metrics = client.get("/metrics").text
+    assert 'http_requests_total{method="GET",path="/error",status="500"}' in metrics
+
+
+def test_unknown_paths_share_one_label():
+    client.get("/does-not-exist-1")
+    client.get("/does-not-exist-2")
+    metrics = client.get("/metrics").text
+    assert 'path="unmatched",status="404"' in metrics
+    assert "does-not-exist" not in metrics

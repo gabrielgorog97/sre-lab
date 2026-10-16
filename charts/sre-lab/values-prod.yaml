@@ -1,5 +1,8 @@
 replicaCount: 4
 
+monitoring:
+  severity: critical
+
 resources:
   requests:
     cpu: 100m
