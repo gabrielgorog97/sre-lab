@@ -40,16 +40,25 @@ curl localhost:8080/health
 terraform destroy
 ```
 
-## Run on Kubernetes (Docker Desktop)
+## Run on Kubernetes with Helm (Docker Desktop)
 
-Always pass `--context docker-desktop` so nothing is applied to another cluster.
+The chart lives in `charts/sre-lab`. Each environment has its own values file
+(`values-dev.yaml`, `values-prod.yaml`) layered on top of `values.yaml`.
+
+Always pass `--kube-context docker-desktop` / `--context docker-desktop` so nothing is
+applied to another cluster.
 
 ```bash
-kubectl --context docker-desktop apply -f k8s/namespace.yaml
-kubectl --context docker-desktop apply -f k8s/
-kubectl --context docker-desktop -n sre-lab rollout status deployment/sre-lab
-kubectl --context docker-desktop -n sre-lab port-forward svc/sre-lab 9090:80
+helm upgrade --install sre-lab-dev charts/sre-lab \
+  --kube-context docker-desktop -n sre-lab-dev --create-namespace \
+  -f charts/sre-lab/values-dev.yaml --wait
+
+helm list -A --kube-context docker-desktop
+kubectl --context docker-desktop -n sre-lab-dev port-forward svc/sre-lab-dev 9090:80
 curl localhost:9090/health
+
+helm history sre-lab-dev --kube-context docker-desktop -n sre-lab-dev
+helm rollback sre-lab-dev 1 --kube-context docker-desktop -n sre-lab-dev
 ```
 
 ## Lint and test
