@@ -1,0 +1,7 @@
+{{ .Release.Name }} is deployed to namespace {{ .Release.Namespace }} with {{ .Values.replicaCount }} replica(s).
+
+Image: {{ .Values.image.repository }}:{{ include "sre-lab.imageTag" . }}
+
+To reach it from your Mac:
+  kubectl --context docker-desktop -n {{ .Release.Namespace }} port-forward svc/{{ .Release.Name }} 9090:{{ .Values.service.port }}
+  curl localhost:9090/health
