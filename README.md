@@ -61,6 +61,27 @@ helm history sre-lab-dev --kube-context docker-desktop -n sre-lab-dev
 helm rollback sre-lab-dev 1 --kube-context docker-desktop -n sre-lab-dev
 ```
 
+## GitOps with Argo CD
+
+Argo CD watches `charts/sre-lab` on `main` and keeps `sre-lab-dev` and `sre-lab-prod`
+in sync with Git. Changes are made through pull requests, not with `helm upgrade`.
+
+```bash
+kubectl --context docker-desktop create namespace argocd
+kubectl --context docker-desktop apply -n argocd --server-side --force-conflicts \
+  -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.5/manifests/install.yaml
+kubectl --context docker-desktop apply -f argocd/
+kubectl --context docker-desktop -n argocd get applications
+```
+
+Open the UI at https://localhost:8443 (user `admin`):
+
+```bash
+kubectl --context docker-desktop -n argocd port-forward svc/argocd-server 8443:443
+kubectl --context docker-desktop -n argocd get secret argocd-initial-admin-secret \
+  -o jsonpath='{.data.password}' | base64 -d; echo
+```
+
 ## Lint and test
 
 ```bash
