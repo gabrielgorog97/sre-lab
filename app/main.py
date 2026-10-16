@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import random
 import socket
 import time
@@ -12,6 +13,8 @@ from pydantic import BaseModel, Field
 from starlette.routing import Match
 
 app = FastAPI(title="sre-lab")
+# uvicorn's access log marks every request INFO, even a 503, so failures get their own ERROR line.
+log = logging.getLogger("uvicorn.error")
 
 INDEX_HTML = Path(__file__).parent / "static" / "index.html"
 POD_NAME = socket.gethostname()
@@ -126,6 +129,7 @@ async def checkout(order: Checkout):
         await asyncio.sleep(c["latency_ms"] / 1000)
     if random.random() < c["error_rate"]:
         ORDERS.labels(result="failed").inc()
+        log.error("checkout failed: payment provider unavailable (chaos)")
         return JSONResponse(
             status_code=503,
             content={"error": "payment provider unavailable", "pod": POD_NAME},
@@ -133,6 +137,7 @@ async def checkout(order: Checkout):
 
     total = sum(PRODUCTS[i.id]["price"] * i.qty for i in order.items)
     ORDERS.labels(result="ok").inc()
+    log.info("order placed total=%.2f", total)
     return {"order_id": uuid.uuid4().hex[:8], "total": round(total, 2), "pod": POD_NAME}
 
 

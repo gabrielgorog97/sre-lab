@@ -33,10 +33,52 @@ data:
       },
       "panels": [
         {
+          "id": 11,
+          "type": "table",
+          "title": "Active alerts",
+          "description": "Pending: the rule is broken, Prometheus waits to be sure. Firing: the alert was sent to Alertmanager. Empty means all good.",
+          "gridPos": { "x": 0, "y": 0, "w": 24, "h": 5 },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "ALERTS{namespace=\"$namespace\"}",
+              "format": "table",
+              "instant": true
+            }
+          ],
+          "transformations": [
+            { "id": "filterFieldsByName", "options": { "include": { "names": ["alertname", "alertstate", "severity"] } } }
+          ],
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "alertstate" },
+                "properties": [
+                  { "id": "custom.cellOptions", "value": { "type": "color-background" } },
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "type": "value",
+                        "options": {
+                          "firing": { "color": "red", "text": "Firing" },
+                          "pending": { "color": "orange", "text": "Pending" }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
           "id": 1,
           "type": "stat",
           "title": "Pods up",
-          "gridPos": { "x": 0, "y": 0, "w": 6, "h": 5 },
+          "gridPos": { "x": 0, "y": 5, "w": 6, "h": 5 },
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "targets": [
             { "refId": "A", "expr": "sum(up{namespace=\"$namespace\", service=\"$namespace\"})" }
@@ -46,7 +88,7 @@ data:
           "id": 2,
           "type": "stat",
           "title": "Error rate (5xx)",
-          "gridPos": { "x": 6, "y": 0, "w": 6, "h": 5 },
+          "gridPos": { "x": 6, "y": 5, "w": 6, "h": 5 },
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "fieldConfig": {
             "defaults": {
@@ -71,7 +113,7 @@ data:
           "id": 3,
           "type": "stat",
           "title": "p95 latency",
-          "gridPos": { "x": 12, "y": 0, "w": 6, "h": 5 },
+          "gridPos": { "x": 12, "y": 5, "w": 6, "h": 5 },
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "fieldConfig": { "defaults": { "unit": "s" } },
           "targets": [
@@ -85,7 +127,7 @@ data:
           "id": 4,
           "type": "stat",
           "title": "Requests per second",
-          "gridPos": { "x": 18, "y": 0, "w": 6, "h": 5 },
+          "gridPos": { "x": 18, "y": 5, "w": 6, "h": 5 },
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "fieldConfig": { "defaults": { "unit": "reqps" } },
           "targets": [
@@ -96,7 +138,7 @@ data:
           "id": 5,
           "type": "timeseries",
           "title": "Traffic by status code",
-          "gridPos": { "x": 0, "y": 5, "w": 12, "h": 9 },
+          "gridPos": { "x": 0, "y": 10, "w": 12, "h": 9 },
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "fieldConfig": { "defaults": { "unit": "reqps" } },
           "targets": [
@@ -111,7 +153,7 @@ data:
           "id": 6,
           "type": "timeseries",
           "title": "Latency p50 / p95 / p99",
-          "gridPos": { "x": 12, "y": 5, "w": 12, "h": 9 },
+          "gridPos": { "x": 12, "y": 10, "w": 12, "h": 9 },
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "fieldConfig": { "defaults": { "unit": "s" } },
           "targets": [
@@ -136,7 +178,7 @@ data:
           "id": 7,
           "type": "timeseries",
           "title": "Requests by path",
-          "gridPos": { "x": 0, "y": 14, "w": 12, "h": 8 },
+          "gridPos": { "x": 0, "y": 19, "w": 12, "h": 8 },
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "fieldConfig": { "defaults": { "unit": "reqps" } },
           "targets": [
@@ -151,7 +193,7 @@ data:
           "id": 8,
           "type": "timeseries",
           "title": "Memory per pod (saturation)",
-          "gridPos": { "x": 12, "y": 14, "w": 12, "h": 8 },
+          "gridPos": { "x": 12, "y": 19, "w": 12, "h": 8 },
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "fieldConfig": { "defaults": { "unit": "bytes" } },
           "targets": [
@@ -166,7 +208,7 @@ data:
           "id": 9,
           "type": "timeseries",
           "title": "Log lines with 5xx (Loki)",
-          "gridPos": { "x": 0, "y": 22, "w": 24, "h": 6 },
+          "gridPos": { "x": 0, "y": 27, "w": 24, "h": 6 },
           "datasource": { "type": "loki", "uid": "loki" },
           "targets": [
             {
@@ -180,7 +222,7 @@ data:
           "id": 10,
           "type": "logs",
           "title": "Application logs (Loki)",
-          "gridPos": { "x": 0, "y": 28, "w": 24, "h": 12 },
+          "gridPos": { "x": 0, "y": 33, "w": 24, "h": 12 },
           "datasource": { "type": "loki", "uid": "loki" },
           "options": { "showTime": true, "wrapLogMessage": true, "sortOrder": "Descending" },
           "targets": [

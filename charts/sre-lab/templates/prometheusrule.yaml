@@ -15,6 +15,7 @@ spec:
           for: 1m
           labels:
             severity: {{ .Values.monitoring.severity }}
+            namespace: {{ .Release.Namespace }}
           annotations:
             summary: "{{ .Release.Name }} has no healthy targets"
             description: "Prometheus cannot scrape any pod of {{ .Release.Name }} in {{ .Release.Namespace }}."
@@ -28,6 +29,7 @@ spec:
           for: 2m
           labels:
             severity: {{ .Values.monitoring.severity }}
+            namespace: {{ .Release.Namespace }}
           annotations:
             summary: "{{ .Release.Name }} 5xx error rate is high"
             description: "More than {{ mulf .Values.monitoring.errorRateThreshold 100 }}% of requests to {{ .Release.Name }} returned 5xx for 2 minutes."
@@ -40,6 +42,7 @@ spec:
           for: 5m
           labels:
             severity: {{ .Values.monitoring.severity }}
+            namespace: {{ .Release.Namespace }}
           annotations:
             summary: "{{ .Release.Name }} p95 latency is high"
             description: "p95 latency of {{ .Release.Name }} is above {{ .Values.monitoring.latencyP95Seconds }}s for 5 minutes."

@@ -40,12 +40,13 @@ def test_checkout_rejects_unknown_product():
     assert response.status_code == 400
 
 
-def test_chaos_makes_checkout_fail_and_is_counted():
+def test_chaos_makes_checkout_fail_and_is_counted(caplog):
     client.post("/api/chaos", json={"latency_ms": 0, "error_rate": 1.0})
     assert client.get("/api/chaos").json()["expires_in"] > 0
 
     response = client.post("/api/checkout", json={"items": [{"id": "mug", "qty": 1}]})
     assert response.status_code == 503
+    assert any(r.levelname == "ERROR" and "checkout failed" in r.message for r in caplog.records)
 
     metrics = client.get("/metrics").text
     assert 'path="/api/checkout",status="503"' in metrics
