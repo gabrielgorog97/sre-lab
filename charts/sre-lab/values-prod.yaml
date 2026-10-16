@@ -6,6 +6,6 @@ monitoring:
 resources:
   requests:
     cpu: 100m
-    memory: 96Mi
+    memory: 10Mi
   limits:
     memory: 192Mi
