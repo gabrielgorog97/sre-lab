@@ -1,13 +1,22 @@
 # sre-lab
 
-A small API used to practice the full SRE toolchain: Docker, GitHub Actions, Terraform,
-Kubernetes, Helm, Argo CD, Prometheus and Grafana.
+A small demo store, **uptime.supply**, used to practice the full SRE toolchain: Docker,
+GitHub Actions, Terraform, Kubernetes, Helm, Argo CD, Prometheus, Grafana and Loki.
+Nothing is for sale and no payment is taken.
+
+The store has a chaos panel that slows down or fails the checkout. That is what makes the
+alerts, dashboards and logs in this repo show something real.
 
 ## Endpoints
 
-- `GET /` returns a hello message
+- `GET /` the store UI
+- `GET /api/products` the product list
+- `POST /api/checkout` places a fake order; returns 503 when chaos says the payment fails
+- `GET /api/chaos`, `POST /api/chaos` read or set extra latency and failure rate for checkout.
+  Chaos is kept in memory per pod and resets itself after 5 minutes.
 - `GET /health` returns `{"status": "ok"}`, used by health checks
-- `GET /metrics` exposes Prometheus metrics (request count and latency)
+- `GET /error` always returns 500
+- `GET /metrics` exposes Prometheus metrics (requests, latency, `shop_orders_total`)
 
 ## Run locally
 

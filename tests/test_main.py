@@ -1,3 +1,4 @@
+import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -5,10 +6,55 @@ from app.main import app
 client = TestClient(app)
 
 
-def test_root_returns_message():
+@pytest.fixture(autouse=True)
+def no_chaos():
+    client.post("/api/chaos", json={"latency_ms": 0, "error_rate": 0})
+    yield
+    client.post("/api/chaos", json={"latency_ms": 0, "error_rate": 0})
+
+
+def test_root_serves_the_store():
     response = client.get("/")
     assert response.status_code == 200
-    assert response.json() == {"message": "Hello from sre-lab"}
+    assert "text/html" in response.headers["content-type"]
+    assert "Demo store" in response.text
+
+
+def test_products_are_listed():
+    products = client.get("/api/products").json()
+    assert len(products) == 6
+    assert {"id", "name", "price"} <= products[0].keys()
+
+
+def test_checkout_returns_total():
+    response = client.post(
+        "/api/checkout", json={"items": [{"id": "mug", "qty": 2}, {"id": "socks", "qty": 1}]}
+    )
+    assert response.status_code == 200
+    assert response.json()["total"] == 40.0
+    assert 'shop_orders_total{result="ok"}' in client.get("/metrics").text
+
+
+def test_checkout_rejects_unknown_product():
+    response = client.post("/api/checkout", json={"items": [{"id": "nope", "qty": 1}]})
+    assert response.status_code == 400
+
+
+def test_chaos_makes_checkout_fail_and_is_counted():
+    client.post("/api/chaos", json={"latency_ms": 0, "error_rate": 1.0})
+    assert client.get("/api/chaos").json()["expires_in"] > 0
+
+    response = client.post("/api/checkout", json={"items": [{"id": "mug", "qty": 1}]})
+    assert response.status_code == 503
+
+    metrics = client.get("/metrics").text
+    assert 'path="/api/checkout",status="503"' in metrics
+    assert 'shop_orders_total{result="failed"}' in metrics
+
+
+def test_chaos_rejects_out_of_range_values():
+    response = client.post("/api/chaos", json={"latency_ms": 99999, "error_rate": 2})
+    assert response.status_code == 422
 
 
 def test_health_returns_ok():

@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uptime Supply · demo store</title>
+<style>
+  :root {
+    --bg: #0b0d12; --panel: #141821; --line: #232937; --text: #e8ebf2; --muted: #8b93a7;
+    --accent: #7c5cff; --accent-2: #22d3ee; --ok: #34d399; --bad: #f87171; --radius: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(1200px 600px at 80% -10%, #1d1840 0%, transparent 60%), var(--bg);
+    color: var(--text); min-height: 100vh;
+  }
+  button { font: inherit; cursor: pointer; border: 0; }
+  .demo { background: #1a1f2b; color: var(--muted); text-align: center; font-size: 13px; padding: 8px 16px; }
+  .demo a { color: var(--accent-2); }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    max-width: 1100px; margin: 0 auto; padding: 24px;
+  }
+  .brand { font-weight: 700; font-size: 20px; letter-spacing: -0.02em; }
+  .brand span { background: linear-gradient(90deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; color: transparent; }
+  .pill { background: var(--panel); border: 1px solid var(--line); color: var(--text); padding: 10px 16px; border-radius: 999px; }
+  .pill b { background: var(--accent); border-radius: 999px; padding: 1px 8px; margin-left: 6px; font-size: 13px; }
+  .hero { max-width: 1100px; margin: 0 auto; padding: 24px 24px 8px; }
+  .hero h1 { font-size: clamp(32px, 5vw, 52px); letter-spacing: -0.03em; line-height: 1.05; }
+  .hero p { color: var(--muted); margin-top: 12px; max-width: 560px; }
+  .grid {
+    max-width: 1100px; margin: 0 auto; padding: 32px 24px 96px;
+    display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  }
+  .card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 20px; display: flex; flex-direction: column; gap: 10px; transition: transform .15s, border-color .15s;
+  }
+  .card:hover { transform: translateY(-3px); border-color: #3a3360; }
+  .art {
+    height: 140px; border-radius: 12px; display: grid; place-items: center; font-size: 56px;
+    background: linear-gradient(135deg, #221c44, #12303a);
+  }
+  .card h3 { font-size: 16px; }
+  .card small { color: var(--muted); }
+  .row { display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
+  .price { font-weight: 700; }
+  .add { background: var(--text); color: var(--bg); padding: 8px 14px; border-radius: 10px; font-weight: 600; }
+  .add:active { transform: scale(.96); }
+
+  .overlay { position: fixed; inset: 0; background: #0008; opacity: 0; pointer-events: none; transition: opacity .2s; }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+  .drawer {
+    position: fixed; top: 0; right: 0; height: 100%; width: min(400px, 100%); background: var(--panel);
+    border-left: 1px solid var(--line); padding: 24px; display: flex; flex-direction: column; gap: 16px;
+    transform: translateX(100%); transition: transform .25s ease;
+  }
+  .drawer.open { transform: none; }
+  .drawer h2 { font-size: 20px; display: flex; justify-content: space-between; }
+  .close { background: none; color: var(--muted); font-size: 22px; }
+  .lines { flex: 1; overflow: auto; display: flex; flex-direction: column; gap: 12px; }
+  .line { display: flex; align-items: center; gap: 12px; }
+  .line .e { font-size: 28px; }
+  .line .n { flex: 1; }
+  .qty { display: flex; gap: 6px; align-items: center; }
+  .qty button { background: var(--line); color: var(--text); width: 26px; height: 26px; border-radius: 8px; }
+  .total { display: flex; justify-content: space-between; font-weight: 700; border-top: 1px solid var(--line); padding-top: 16px; }
+  .primary {
+    background: linear-gradient(90deg, var(--accent), #5b8cff); color: white; padding: 14px; border-radius: 12px; font-weight: 600;
+  }
+  .primary:disabled { opacity: .5; cursor: progress; }
+  .empty { color: var(--muted); }
+
+  .chaos-btn { position: fixed; left: 20px; bottom: 20px; background: #2a1620; color: #fca5a5; border: 1px solid #4a2030; }
+  .chaos {
+    position: fixed; left: 20px; bottom: 76px; width: min(340px, calc(100% - 40px)); background: var(--panel);
+    border: 1px solid #4a2030; border-radius: var(--radius); padding: 20px; display: none; flex-direction: column; gap: 14px;
+  }
+  .chaos.open { display: flex; }
+  .chaos h3 { font-size: 16px; }
+  .chaos p, .chaos label { color: var(--muted); font-size: 13px; }
+  .chaos input { width: 100%; accent-color: var(--bad); }
+  .chaos .btns { display: flex; gap: 8px; }
+  .chaos .btns button { flex: 1; padding: 10px; border-radius: 10px; }
+  .danger { background: var(--bad); color: #1a0505; font-weight: 600; }
+  .ghost { background: var(--line); color: var(--text); }
+  .status { font-size: 12px; color: var(--muted); font-family: ui-monospace, monospace; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 150%); background: var(--panel);
+    border: 1px solid var(--line); padding: 14px 20px; border-radius: 12px; transition: transform .25s; max-width: 90%;
+  }
+  .toast.show { transform: translate(-50%, 0); }
+  .toast.ok { border-color: var(--ok); }
+  .toast.bad { border-color: var(--bad); }
+</style>
+</head>
+<body>
+<div class="demo">Demo store — nothing is for sale and no payment is taken. Part of <a href="https://github.com/gabrielgorog97/sre-lab">sre-lab</a>, a portfolio project on Kubernetes, GitOps and observability.</div>
+
+<header>
+  <div class="brand">uptime<span>.supply</span></div>
+  <button class="pill" id="cartBtn">Cart<b id="count">0</b></button>
+</header>
+
+<section class="hero">
+  <h1>Merch for people<br>who carry the pager.</h1>
+  <p>Add things to the cart and check out. Then open the chaos panel, break the payment step and watch the alerts and dashboards react.</p>
+</section>
+
+<main class="grid" id="grid"></main>
+
+<div class="overlay" id="overlay"></div>
+<aside class="drawer" id="drawer">
+  <h2>Your cart <button class="close" id="closeCart">×</button></h2>
+  <div class="lines" id="lines"></div>
+  <div class="total"><span>Total</span><span id="total">€0</span></div>
+  <button class="primary" id="checkout">Check out</button>
+</aside>
+
+<button class="pill chaos-btn" id="chaosBtn">⚡ Chaos</button>
+<section class="chaos" id="chaos">
+  <h3>Chaos panel</h3>
+  <p>Breaks the checkout of the pod that serves this request. Resets itself after 5 minutes.</p>
+  <label>Extra latency: <b id="latV">0</b> ms<input type="range" id="lat" min="0" max="3000" step="100" value="0"></label>
+  <label>Failed payments: <b id="errV">0</b>%<input type="range" id="err" min="0" max="100" step="5" value="0"></label>
+  <div class="btns"><button class="ghost" id="reset">Reset</button><button class="danger" id="apply">Apply</button></div>
+  <div class="status" id="chaosStatus"></div>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const eur = (n) => "€" + n.toFixed(2).replace(/\.00$/, "");
+let products = {};
+const cart = JSON.parse(localStorage.getItem("cart") || "{}");
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+function toast(msg, kind) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.className = "toast show " + kind;
+  clearTimeout(t._h);
+  t._h = setTimeout(() => (t.className = "toast"), 3500);
+}
+
+function save() {
+  localStorage.setItem("cart", JSON.stringify(cart));
+  render();
+}
+
+function renderGrid() {
+  const grid = $("grid");
+  grid.replaceChildren();
+  for (const p of Object.values(products)) {
+    const card = el("article", "card");
+    card.append(el("div", "art", p.emoji), el("h3", null, p.name), el("small", null, p.tag));
+    const row = el("div", "row");
+    const add = el("button", "add", "Add");
+    add.onclick = () => { cart[p.id] = (cart[p.id] || 0) + 1; save(); toast(p.name + " added", "ok"); };
+    row.append(el("span", "price", eur(p.price)), add);
+    card.append(row);
+    grid.append(card);
+  }
+}
+
+function render() {
+  const lines = $("lines");
+  lines.replaceChildren();
+  let total = 0, count = 0;
+  for (const [id, qty] of Object.entries(cart)) {
+    const p = products[id];
+    if (!p) continue;
+    total += p.price * qty;
+    count += qty;
+    const line = el("div", "line");
+    const q = el("div", "qty");
+    const minus = el("button", null, "−"), plus = el("button", null, "+");
+    minus.onclick = () => { cart[id] > 1 ? cart[id]-- : delete cart[id]; save(); };
+    plus.onclick = () => { cart[id]++; save(); };
+    q.append(minus, el("span", null, qty), plus);
+    line.append(el("span", "e", p.emoji), el("span", "n", p.name), q);
+    lines.append(line);
+  }
+  if (!count) lines.append(el("p", "empty", "Nothing here yet."));
+  $("count").textContent = count;
+  $("total").textContent = eur(total);
+  $("checkout").disabled = !count;
+}
+
+function toggleCart(open) {
+  $("drawer").classList.toggle("open", open);
+  $("overlay").classList.toggle("open", open);
+}
+
+async function checkout() {
+  const btn = $("checkout");
+  btn.disabled = true;
+  btn.textContent = "Processing…";
+  const items = Object.entries(cart).map(([id, qty]) => ({ id, qty }));
+  try {
+    const r = await fetch("/api/checkout", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items }),
+    });
+    const body = await r.json();
+    if (r.ok) {
+      for (const k of Object.keys(cart)) delete cart[k];
+      save();
+      toggleCart(false);
+      toast(`Order ${body.order_id} confirmed · ${eur(body.total)} · served by ${body.pod}`, "ok");
+    } else {
+      toast(`Checkout failed (${r.status}): ${body.error || "error"} · ${body.pod || ""}`, "bad");
+    }
+  } catch {
+    toast("Checkout failed: the store is unreachable", "bad");
+  }
+  btn.textContent = "Check out";
+  render();
+}
+
+function showChaos(c) {
+  $("lat").value = c.latency_ms; $("latV").textContent = c.latency_ms;
+  $("err").value = Math.round(c.error_rate * 100); $("errV").textContent = Math.round(c.error_rate * 100);
+  const on = c.latency_ms || c.error_rate;
+  $("chaosStatus").textContent = `pod ${c.pod} · ` + (on ? `active, resets in ${c.expires_in}s` : "healthy");
+}
+
+async function sendChaos(latency_ms, error_rate) {
+  const r = await fetch("/api/chaos", {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ latency_ms, error_rate }),
+  });
+  showChaos(await r.json());
+}
+
+$("cartBtn").onclick = () => toggleCart(true);
+$("closeCart").onclick = () => toggleCart(false);
+$("overlay").onclick = () => toggleCart(false);
+$("checkout").onclick = checkout;
+$("chaosBtn").onclick = async () => {
+  $("chaos").classList.toggle("open");
+  showChaos(await (await fetch("/api/chaos")).json());
+};
+$("lat").oninput = (e) => ($("latV").textContent = e.target.value);
+$("err").oninput = (e) => ($("errV").textContent = e.target.value);
+$("apply").onclick = () => sendChaos(+$("lat").value, +$("err").value / 100);
+$("reset").onclick = () => sendChaos(0, 0);
+
+fetch("/api/products").then((r) => r.json()).then((list) => {
+  products = Object.fromEntries(list.map((p) => [p.id, p]));
+  renderGrid();
+  render();
+});
+</script>
+</body>
+</html>
