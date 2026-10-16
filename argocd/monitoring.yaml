@@ -27,6 +27,43 @@ spec:
           sidecar:
             dashboards:
               searchNamespace: ALL
+          additionalDataSources:
+            - name: Loki
+              type: loki
+              uid: loki
+              url: http://loki.monitoring.svc:3100
+              access: proxy
+        alertmanager:
+          service:
+            type: LoadBalancer
+          config:
+            route:
+              receiver: "null"
+              group_by: [alertname, namespace]
+              group_wait: 30s
+              group_interval: 5m
+              repeat_interval: 4h
+              routes:
+                - receiver: "null"
+                  matchers:
+                    - alertname = "Watchdog"
+                - receiver: oncall-critical
+                  matchers:
+                    - severity = "critical"
+                  repeat_interval: 1h
+                - receiver: oncall-warning
+                  matchers:
+                    - severity = "warning"
+            receivers:
+              - name: "null"
+              - name: oncall-critical
+                webhook_configs:
+                  - url: http://alert-receiver.monitoring.svc:8080/critical
+                    send_resolved: true
+              - name: oncall-warning
+                webhook_configs:
+                  - url: http://alert-receiver.monitoring.svc:8080/warning
+                    send_resolved: true
         prometheus-node-exporter:
           hostRootFsMount:
             enabled: false

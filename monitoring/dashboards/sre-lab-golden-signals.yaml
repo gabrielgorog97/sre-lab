@@ -161,6 +161,31 @@ data:
               "legendFormat": "{{pod}}"
             }
           ]
+        },
+        {
+          "id": 9,
+          "type": "timeseries",
+          "title": "Log lines with 5xx (Loki)",
+          "gridPos": { "x": 0, "y": 22, "w": 24, "h": 6 },
+          "datasource": { "type": "loki", "uid": "loki" },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (pod) (count_over_time({namespace=\"$namespace\", container=\"app\"} |~ \"\\\" 5[0-9]{2} \" [1m]))",
+              "legendFormat": "{{pod}}"
+            }
+          ]
+        },
+        {
+          "id": 10,
+          "type": "logs",
+          "title": "Application logs (Loki)",
+          "gridPos": { "x": 0, "y": 28, "w": 24, "h": 12 },
+          "datasource": { "type": "loki", "uid": "loki" },
+          "options": { "showTime": true, "wrapLogMessage": true, "sortOrder": "Descending" },
+          "targets": [
+            { "refId": "A", "expr": "{namespace=\"$namespace\", container=\"app\"}" }
+          ]
         }
       ]
     }
